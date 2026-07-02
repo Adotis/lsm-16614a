@@ -716,12 +716,13 @@
                     <!-- Config export/import (bottom of the left column; shown when Advanced is on) -->
                     <div id="presetConfigSection" style="display:none; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
                         <div style="font-size:12px; color:#ccc; margin-bottom:6px;">Configuration</div>
-                        <div style="display:flex; gap:8px; align-items:center;">
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" onclick="syncSharedConfigNow()" class="top-bar-btn" style="padding:6px 10px; background:#4CAF50; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Sync shared config</button>
                             <button type="button" onclick="exportPresetConfig()" class="top-bar-btn" style="padding:6px 10px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Export</button>
                             <button type="button" onclick="document.getElementById('importConfigFile').click()" class="top-bar-btn" style="padding:6px 10px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Import</button>
                             <input id="importConfigFile" type="file" accept="application/json,.json" style="display:none;" onchange="if(this.files&&this.files[0]){importPresetConfigFromFile(this.files[0]); this.value='';}">
                         </div>
-                        <div style="font-size:12px; color:#aaa; margin-top:6px;">Export saves all preset settings (URLs, names, colors, order, hidden, links) to a file. Import replaces them.</div>
+                        <div style="font-size:12px; color:#aaa; margin-top:6px;"><strong>Sync shared config</strong> pulls the latest published presets now (replaces your current ones). <strong>Export</strong> saves all preset settings to a file; <strong>Import</strong> replaces them from a file.</div>
                     </div>
                 </div>
 
@@ -4050,40 +4051,53 @@
             // On load, fetch it; brand-new viewers adopt it silently, existing viewers are prompted when
             // it changes (detected via its "stamp"). This lets presets be updated for everyone by
             // replacing config.json (produced with the Export button) rather than editing the app.
+            function _masterStampOf(cfg) { return String((cfg && (cfg.stamp || cfg.version)) || ''); }
+            async function fetchMasterConfig() {
+                const resp = await fetch('config.json?cb=' + Date.now(), { cache: 'no-store' });
+                if (!resp.ok) return null;
+                const cfg = await resp.json();
+                if (!cfg || typeof cfg !== 'object' || !cfg.presets || typeof cfg.presets !== 'object') return null;
+                return cfg;
+            }
+            function applyMasterConfig(cfg) {
+                _activePresets = _clonePresets(cfg.presets);
+                _presetNames = _clonePresets(cfg.names || {});
+                _presetColors = _clonePresets(cfg.colors || {});
+                _presetOrder = Array.isArray(cfg.order) ? cfg.order.slice() : null;
+                _presetHidden = (cfg.hidden && typeof cfg.hidden === 'object') ? _clonePresets(cfg.hidden) : {};
+                _presetLinks = (cfg.links && typeof cfg.links === 'object') ? _clonePresets(cfg.links) : {};
+                Object.keys(DEFAULT_PRESETS).forEach(function(k) { if (!_presetNames[k]) _presetNames[k] = PRESET_VENUE_LABELS[k] || k; });
+                _saveStoredPresetConfig();
+                try { localStorage.setItem('syncedMasterStamp', _masterStampOf(cfg)); } catch (e) { /* ignore */ }
+                renderCustomPresetButtons();
+            }
             async function initMasterConfig() {
                 try {
-                    const resp = await fetch('config.json?cb=' + Date.now(), { cache: 'no-store' });
-                    if (!resp.ok) return; // no shared config published — use baked/local config
-                    const cfg = await resp.json();
-                    if (!cfg || typeof cfg !== 'object' || !cfg.presets || typeof cfg.presets !== 'object') return;
-                    const masterStamp = String(cfg.stamp || cfg.version || '');
+                    const cfg = await fetchMasterConfig();
+                    if (!cfg) return; // no shared config published — use baked/local config
+                    const masterStamp = _masterStampOf(cfg);
                     if (!masterStamp) return; // can't tell if it's new; skip to avoid loops
                     const syncedStamp = localStorage.getItem('syncedMasterStamp');
-
-                    const applyMaster = function() {
-                        _activePresets = _clonePresets(cfg.presets);
-                        _presetNames = _clonePresets(cfg.names || {});
-                        _presetColors = _clonePresets(cfg.colors || {});
-                        _presetOrder = Array.isArray(cfg.order) ? cfg.order.slice() : null;
-                        _presetHidden = (cfg.hidden && typeof cfg.hidden === 'object') ? _clonePresets(cfg.hidden) : {};
-                        _presetLinks = (cfg.links && typeof cfg.links === 'object') ? _clonePresets(cfg.links) : {};
-                        Object.keys(DEFAULT_PRESETS).forEach(function(k) { if (!_presetNames[k]) _presetNames[k] = PRESET_VENUE_LABELS[k] || k; });
-                        _saveStoredPresetConfig();
-                        try { localStorage.setItem('syncedMasterStamp', masterStamp); } catch (e) { /* ignore */ }
-                        renderCustomPresetButtons();
-                    };
-                    const rememberStamp = function() { try { localStorage.setItem('syncedMasterStamp', masterStamp); } catch (e) { /* ignore */ } };
-
                     if (syncedStamp === masterStamp) return; // already up to date with this shared config
-
-                    if (_presetFirstRun) {
-                        // First-ever visit: just adopt the shared config, no prompt.
-                        applyMaster();
-                        return;
-                    }
+                    if (_presetFirstRun) { applyMasterConfig(cfg); return; } // first visit: adopt silently
                     // Returning viewer and the shared config changed → ask.
-                    showMasterSyncModal(applyMaster, rememberStamp);
+                    showMasterSyncModal(
+                        function() { applyMasterConfig(cfg); },
+                        function() { try { localStorage.setItem('syncedMasterStamp', masterStamp); } catch (e) { /* ignore */ } }
+                    );
                 } catch (e) { /* offline / no file / parse error — ignore, keep local config */ }
+            }
+            // Manual "sync now" from the Advanced settings — pulls the latest shared config on demand
+            // (useful for anyone who previously chose "Keep mine").
+            async function syncSharedConfigNow() {
+                try {
+                    const cfg = await fetchMasterConfig();
+                    if (!cfg) { if (typeof showToast === 'function') showToast('No shared config found to sync', 2600); return; }
+                    applyMasterConfig(cfg);
+                    // Refresh the editor if the Settings modal is open so the change is visible immediately.
+                    try { if (document.getElementById('settingsModal').style.display === 'flex') openPresetEditor(); } catch (e) { /* ignore */ }
+                    if (typeof showToast === 'function') showToast('Synced with the latest shared config', 2600);
+                } catch (e) { if (typeof showToast === 'function') showToast('Could not load shared config', 2600); }
             }
             function showMasterSyncModal(onSync, onKeep) {
                 try {
