@@ -1,0 +1,326 @@
+{
+  "version": "14.0",
+  "stamp": "2026-07-02T18:01:47Z",
+  "presets": {
+    "tryon": [
+      {
+        "label": "Carter P Brown Ring 1",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/carter_p_brown_ring_1/main_720p30.m3u8"
+      },
+      {
+        "label": "Jarrett Schmid Ring 2",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/jarrett_schmid_ring_2/main_720p30.m3u8"
+      },
+      {
+        "label": "Gordon Wright Ring 3",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/gordon_wright_ring_3/main_720p30.m3u8"
+      },
+      {
+        "label": "Reynolds Family Grand Hunter Ring Ring 4",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/reynolds_family_grand_hunter_ring_ring_4/main_720p30.m3u8"
+      },
+      {
+        "label": "Tryon Stadium Ring 5",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/tryon_stadium_ring_5/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 6",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/ring_6/main_720p30.m3u8"
+      },
+      {
+        "label": "International Stadium",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/09/international_stadium/main_720p30.m3u8"
+      },
+      {
+        "label": "Derby Field",
+        "url": "https://duuq3f772e1xh.cloudfront.net/live-streams/tryon/2026/06/26/derby_field/main_720p30.m3u8"
+      },
+      {
+        "label": "Indoor Arena",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/tryon/2025/11/05/indoor-arena/main_720p30.m3u8"
+      }
+    ],
+    "wellington": [
+      {
+        "label": "International Ring",
+        "url": "https://d1f95pnhloigqz.cloudfront.net/live-streams/esp/2025/11/09/international-ring/main_720p30.m3u8"
+      },
+      {
+        "label": "Er Mische Grand Hunter",
+        "url": "https://d1f95pnhloigqz.cloudfront.net/live-streams/esp/2025/11/08/er-mische-grand-hunter/main_720p30.m3u8"
+      },
+      {
+        "label": "Rost Arena",
+        "url": "https://d1f95pnhloigqz.cloudfront.net/live-streams/esp/2025/11/09/rost-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Mogavero 1",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/02/mogavero_1/main_720p30.m3u8"
+      },
+      {
+        "label": "Denemethy",
+        "url": "https://d1f95pnhloigqz.cloudfront.net/live-streams/esp/2025/11/09/denemethy/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 6",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/04/ring-6/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 7",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2025/11/15/international_arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 8",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2025/11/15/ring-8/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 9",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2025/11/15/ring_9/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 10",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/02/ring_10/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 11",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/02/ring-11/main_720p30.m3u8"
+      },
+      {
+        "label": "Ring 12",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/02/ring-12/main_720p30.m3u8"
+      },
+      {
+        "label": "South Ring",
+        "url": "https://d2anp6bth0sbhd.cloudfront.net/live-streams/esp/2026/01/02/south-ring/main_720p30.m3u8"
+      }
+    ],
+    "desert": [
+      {
+        "label": "Grand Prix Stadium",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/05/grand-prix-stadium/main_720p30.m3u8"
+      },
+      {
+        "label": "Jumper 1",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/05/jumper-1/main_720p30.m3u8"
+      },
+      {
+        "label": "Jumper 2",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/05/jumper-2/main_720p30.m3u8"
+      },
+      {
+        "label": "Grand Eq Arenajumper 3",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/05/grand-eq-arenajumper-3/main_720p30.m3u8"
+      },
+      {
+        "label": "Jumper 4",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/05/jumper-4/main_720p30.m3u8"
+      },
+      {
+        "label": "Fei Schooling Jumper 5",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/09/fei-schooling-jumper-5/main_720p30.m3u8"
+      },
+      {
+        "label": "Main Hunter Ring",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/main-hunter-ring/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 2",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-2/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 3",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-3/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 4",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-4/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 5",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-5/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 6",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-6/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 7",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-7/main_720p30.m3u8"
+      },
+      {
+        "label": "Hunter 8",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/08/hunter-8/main_720p30.m3u8"
+      },
+      {
+        "label": "Lvn South Point Arena",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/14/lvn-south-point-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Lvn Priefert Pavilion Left",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/14/lvn-priefert-pavilion-left/main_720p30.m3u8"
+      },
+      {
+        "label": "Lvn Priefert Pavilion Right",
+        "url": "https://d2wi8kswfkdznu.cloudfront.net/live-streams/thermal/2025/11/14/lvn-priefert-pavilion-right/main_720p30.m3u8"
+      }
+    ],
+    "tbird": [
+      {
+        "label": "Grand Hunter",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/grand-hunter-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Dina Happy Hunter Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/dina-happy-hunter-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Omni Telegraph Trail Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/16/onni-telegraph-trail-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Fort Grand Prix Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/fort_grand_prix_arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Thunderbird Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/grand_hunter_arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Pacific Park Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/dina_happy_hunter_arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Indoor Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/indoor-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Sky Hi Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/sky-hi-arena/main_720p30.m3u8"
+      },
+      {
+        "label": "Baker View Arena",
+        "url": "https://d12u4c3vtkpxwe.cloudfront.net/live-streams/tbird/2026/04/15/baker_view_arena/main_720p30.m3u8"
+      }
+    ],
+    "custom_preset": [
+      {
+        "label": "Equidome",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/PRSJ/2026/07/01/equidome/main_720p30.m3u8"
+      },
+      {
+        "label": "Hap Hansen",
+        "url": "https://d3kk70hb9h084v.cloudfront.net/live-streams/PRSJ/2026/07/01/hap-hansen-arena/main_720p30.m3u8"
+      }
+    ]
+  },
+  "names": {
+    "tryon": "Tryon",
+    "wellington": "Wellington",
+    "desert": "Desert",
+    "tbird": "Tbird",
+    "custom_preset": "Pacific Ridge"
+  },
+  "colors": {
+    "custom_preset": "#0e4918"
+  },
+  "order": [
+    "tryon",
+    "wellington",
+    "desert",
+    "tbird",
+    "custom_preset"
+  ],
+  "hidden": {},
+  "links": {
+    "custom_preset": [
+      {
+        "label": "Ring Status",
+        "url": "https://pacificridgeshowjumping.com/showgroundslive/ring-status"
+      },
+      {
+        "label": "Video Corrections",
+        "url": "https://showgroundslive.com/PRSJ/admin/UnknownVideos"
+      },
+      {
+        "label": "Video Holes",
+        "url": "https://showgroundslive.com/PRSJ/admin/VideoHoles"
+      },
+      {
+        "label": "Ring Stream Config",
+        "url": "https://admin.showgroundslive.com/PRSJ/ringstreamconfigurations"
+      }
+    ],
+    "tryon": [
+      {
+        "label": "Ring Status",
+        "url": "https://tryon.showgroundslive.com/ring-status"
+      },
+      {
+        "label": "Video Correction",
+        "url": "https://showgroundslive.com/tryon/admin/UnknownVideos"
+      },
+      {
+        "label": "Video Holes",
+        "url": "https://showgroundslive.com/tryon/admin/VideoHoles"
+      },
+      {
+        "label": "Ring Stream Config",
+        "url": "https://admin.showgroundslive.com/tryon/ringstreamconfigurations"
+      }
+    ],
+    "wellington": [
+      {
+        "label": "Ring Status",
+        "url": "https://www.wellingtoninternational.com/showgrounds/ring-status"
+      },
+      {
+        "label": "Video Correction",
+        "url": "https://pbiec.showgroundslive.com/admin/UnknownVideos"
+      },
+      {
+        "label": "Video Holes",
+        "url": "https://pbiec.showgroundslive.com/admin/VideoHoles"
+      },
+      {
+        "label": "Ring Stream Config",
+        "url": "https://admin.showgroundslive.com/esp/ringstreamconfigurations"
+      }
+    ],
+    "desert": [
+      {
+        "label": "Ring Status",
+        "url": "https://dihp.showgroundslive.com/ring-status"
+      },
+      {
+        "label": "Video Correction",
+        "url": "https://showgroundslive.com/thermal/admin/UnknownVideos"
+      },
+      {
+        "label": "Video Holes",
+        "url": "https://showgroundslive.com/thermal/admin/VideoHoles"
+      },
+      {
+        "label": "Ring Stream Config",
+        "url": "https://admin.showgroundslive.com/thermal/ringstreamconfigurations"
+      }
+    ],
+    "tbird": [
+      {
+        "label": "Ring Status",
+        "url": "https://tbird.ca/showgroundslive/ring-status"
+      },
+      {
+        "label": "Video Correction",
+        "url": "https://showgroundslive.com/tbird/admin/UnknownVideos"
+      },
+      {
+        "label": "Video Holes",
+        "url": "https://showgroundslive.com/tbird/admin/VideoHoles"
+      },
+      {
+        "label": "Ring Stream Config",
+        "url": "https://admin.showgroundslive.com/tbird/ringstreamconfigurations"
+      }
+    ]
+  }
+}
