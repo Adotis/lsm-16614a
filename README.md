@@ -3,43 +3,36 @@
 A single-file, client-side web app for monitoring multiple live streams (a multiview video wall).
 No backend or build step — it's one HTML file served as a static page.
 
-- **`index.html`** — the page that gets served (this is what GitHub Pages hosts).
-- **`live_stream_monitor_V14.html`** — the current versioned snapshot (kept for history).
+## Layout
+- **`public/index.html`** — the app; this is the file that gets served. **Edit this one.**
+- **`live_stream_monitor_V*.html`** — versioned snapshots kept for history (not published).
 
-## Hosting on GitHub Pages
+## Hosting (Cloudflare Pages)
+The site is hosted on **Cloudflare Pages**, connected to this GitHub repo:
 
-### One-time setup
-1. Create a new repository on GitHub (e.g., `live-stream-monitor`). It can be public or private
-   (Pages works with private repos on paid plans; public is simplest and free).
-2. From this folder, push the code:
-   ```bash
-   git remote add origin https://github.com/<your-username>/<your-repo>.git
-   git branch -M main
-   git push -u origin main
-   ```
-3. On GitHub: **Settings → Pages**. Under "Build and deployment", set **Source: Deploy from a branch**,
-   **Branch: `main`**, **Folder: `/ (root)`**, then **Save**.
-4. Wait ~1 minute. Your site will be live at:
-   `https://<your-username>.github.io/<your-repo>/`
+- Live URL: **https://live-stream-monitor.pages.dev/**
+- Build settings in the Cloudflare dashboard: **Framework preset: None**, **Build command: (empty)**,
+  **Build output directory: `public`** (so only `public/` is published — nothing else in the repo is exposed).
+- Every push to `main` auto-deploys in ~1 minute.
 
-### Updating the site later
-Edit `index.html`, then:
+(GitHub Pages is intentionally disabled — Cloudflare is the single host.)
+
+## Updating the site
+Edit `public/index.html`, then:
 ```bash
-git add index.html
+cd "C:/Users/adamb/Desktop/Multiview"
+git add public/index.html
 git commit -m "Describe the change"
 git push
 ```
-GitHub Pages redeploys automatically within a minute or so.
+Cloudflare redeploys automatically.
 
-> Tip: going forward, treat `index.html` as the working file. When you want a numbered snapshot,
-> copy it to `live_stream_monitor_V<N>.html` and commit both.
+> To keep a numbered snapshot, copy `public/index.html` to `live_stream_monitor_V<N>.html` and commit both.
 
 ## Notes
-- **Settings are per-browser** (stored in `localStorage`), so each visitor gets their own toggles,
-  presets, hidden shows, etc.
-- **Anyone with the link can open it.** Preset stream URLs are visible in the page source (they're
-  already public CDN links). The **API Login** still requires each user's own credentials.
-- **Playback / CORS:** the site is served over HTTPS and streams are HTTPS, so there's no mixed-content
-  issue. Video playback relies on the stream provider's servers sending permissive CORS headers
-  (`Access-Control-Allow-Origin`). If tiles stay gray with CORS errors in the browser console (F12),
-  that's a request for the stream provider to allow the site's domain — not a change to this file.
+- **Settings are per-browser** (stored in `localStorage`), so each visitor gets their own toggles, presets, etc.
+- This is an **unlisted** site: anyone with the link can open it (no login gate). Ask to switch on
+  Cloudflare Access if you later want to restrict it to specific email addresses.
+- **Playback / CORS:** served over HTTPS with HTTPS streams (no mixed content). Video playback relies on
+  the stream provider sending permissive CORS headers. If tiles stay gray with `Access-Control-Allow-Origin`
+  errors in the console, that's on the provider's side, not this file.
