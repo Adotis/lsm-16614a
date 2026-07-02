@@ -29,6 +29,23 @@ Cloudflare redeploys automatically.
 
 > To keep a numbered snapshot, copy `public/index.html` to `live_stream_monitor_V<N>.html` and commit both.
 
+## Updating everyone's presets without editing the app (shared config)
+You can push new venue presets/streams/links/colors to **all viewers** via a JSON file — no HTML editing:
+
+1. In the live app, open **Settings → Advanced** and set up the presets exactly how you want
+   (add venues, streams, dropdown links, colors, order, hidden state).
+2. Click **Export** — it downloads `multiview-presets.json`.
+3. Rename it to **`config.json`** and put it at **`public/config.json`**, then commit + push
+   (or just send me the exported file and I'll place it).
+
+On load, the app reads `public/config.json`:
+- **New visitors** adopt it automatically.
+- **Returning visitors** get a one-time prompt ("Updated preset configuration available — Sync or Keep mine")
+  whenever the file changes, so their own tweaks aren't wiped without consent.
+
+Each Export is stamped with a unique timestamp, so replacing `config.json` is reliably detected as an update.
+If `public/config.json` doesn't exist, the app just uses its built-in defaults (nothing breaks).
+
 ## Notes
 - **Settings are per-browser** (stored in `localStorage`), so each visitor gets their own toggles, presets, etc.
 - This is an **unlisted** site: anyone with the link can open it (no login gate). Ask to switch on
