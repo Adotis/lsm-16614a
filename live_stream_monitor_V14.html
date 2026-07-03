@@ -20,7 +20,7 @@
         /* Ensure grid items stretch and wrappers fill their grid cells */
         .grid-container { align-items: stretch; }
         .stream-wrapper {
-            
+
             background: #2a2a2a;
             border-radius: 8px;
             overflow: hidden;
@@ -30,6 +30,11 @@
             display: flex;
             flex-direction: column;
             width: 100%;
+            /* Make each tile a query container so the header/title can respond
+               to the tile's own width (which depends on the column count),
+               not just the viewport width. */
+            container-type: inline-size;
+            container-name: tile;
         }
         .stream-wrapper.dragging { opacity: 0.5; }
         .stream-wrapper.drag-over { border: 2px solid #4CAF50; }
@@ -49,7 +54,23 @@
             padding-left: 12px;
         }
         /* Removed ring number badge styling (badges disabled) */
-        .stream-title { display: inline-block; vertical-align: middle; }
+        /* Title truncates to a single line with an ellipsis instead of wrapping
+           to multiple rows as tiles get narrow. Requires min-width:0 on the flex
+           ancestors so the shrink can propagate down to this element. */
+        .stream-title {
+            display: block;
+            flex: 1 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+        /* Allow the header's flex columns to shrink below their content width so
+           the title above can actually be clipped. */
+        .stream-header > div { min-width: 0; }
+        .st-leftcol { min-width: 0; }
+        .st-title-row { min-width: 0; flex: 1 1 auto; }
         .edit-btn {
             background: #4CAF50; color: white; border: none; padding: 4px 8px;
             border-radius: 4px; cursor: pointer; font-size: 11px; transition: background 0.2s;
@@ -364,7 +385,45 @@
         }
 
         @media (max-width: 768px) {
+            /* Only force a single column when the user hasn't picked an explicit
+               column count. When a fixed count is set (grid gets an inline
+               grid-template-columns), that inline style wins over this rule. */
             .grid-container { grid-template-columns: 1fr; }
+            /* Tighten the outer padding/gaps on phones so tiles get more room. */
+            body { padding: 10px; }
+            .grid-container { gap: 10px; }
+        }
+
+        /* --- Per-tile responsive sizing (Issue: black bars + oversized titles) ---
+           These use container queries so they react to each tile's actual width,
+           which depends on the chosen column count, not just the viewport. */
+
+        /* When a tile is narrow, the 16/9 aspect-ratio height falls below the
+           160px min-height floor, which would letterbox the video (black bars
+           above/below). Drop the floor for narrow tiles so the container hugs
+           the 16/9 video exactly. The padding-bottom fallback still prevents
+           any collapse to zero height. */
+        @container tile (max-width: 360px) {
+            .stream-container { min-height: 0; }
+        }
+
+        /* Shrink the header text/padding as tiles get small so the title stays
+           on one line and the header stops eating vertical space. */
+        @container tile (max-width: 340px) {
+            .stream-header {
+                padding: 6px 22px 6px 10px;
+                min-height: 0;
+                font-size: 12px;
+            }
+            .class-trips-info { font-size: 11px !important; margin-top: 4px !important; }
+        }
+        @container tile (max-width: 240px) {
+            .stream-header {
+                padding: 4px 20px 4px 8px;
+                font-size: 11px;
+            }
+            .stream-title { font-size: 11px; font-weight: 600; }
+            .class-trips-info { font-size: 10px !important; margin-top: 3px !important; }
         }
 
         /* --- Neon outer glow for stream wrappers --- */
@@ -1962,9 +2021,9 @@
                 let headerHTML = '<div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">';
 
                 // Left column (name + class info)
-                headerHTML += '<div style="display: flex; flex-direction: column; flex: 1;">';
+                headerHTML += '<div class="st-leftcol" style="display: flex; flex-direction: column; flex: 1;">';
                 // title row: ring name (remove button will be an absolute control on the right)
-                headerHTML += '<div style="display: flex; align-items: center; gap: 10px;">';
+                headerHTML += '<div class="st-title-row" style="display: flex; align-items: center; gap: 10px;">';
                 headerHTML += '<span class="stream-title">Ring ' + (stream.ring_number || 'N/A') + ': ' + (stream.ring_name || 'Unknown') + '</span>';
                 headerHTML += '</div>';
 
@@ -2534,8 +2593,8 @@
 
             // Build a header that mirrors the API-created stream header when metadata is provided
             let headerHTML = '';
-            headerHTML += '<div style="display:flex; flex-direction: column; gap:6px; width:100%;">';
-            headerHTML += `<div style="display:flex; align-items:center;">`;
+            headerHTML += '<div class="st-leftcol" style="display:flex; flex-direction: column; gap:6px; width:100%;">';
+            headerHTML += `<div class="st-title-row" style="display:flex; align-items:center;">`;
             headerHTML += `<span class="stream-title">${escHtml(titleText)}</span>`;
             headerHTML += '</div>';
 
