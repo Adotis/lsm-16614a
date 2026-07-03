@@ -416,6 +416,7 @@
                 top: auto !important;
                 left: auto !important;
                 right: auto !important;
+                flex: 0 1 auto !important;
                 flex-wrap: wrap;
                 justify-content: center;
             }
@@ -544,8 +545,8 @@
 </head>
 <body>
     <div class="page-header" style="max-width: 1800px; margin: 0 auto 16px auto; padding:8px 0 8px 0; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100;">
-        <h1 style="margin:0; position:absolute; left:50%; transform:translateX(-50%); z-index:2; text-align:center;">Live Stream Monitor</h1>
-        <div style="display:flex; align-items:center; gap:8px; position:absolute; left:0; top:50%; transform:translateY(-50%);">
+        <h1 style="margin:0; order:2; flex:0 1 auto; min-width:0; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 12px;">Live Stream Monitor</h1>
+        <div style="display:flex; align-items:center; gap:8px; order:1; flex:1 1 0; justify-content:flex-start;">
             <!-- Settings button -->
                 <button id="settingsBtn" onclick="openSettingsModal()" class="top-bar-btn" style="padding:8px 12px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:6px;" title="Settings">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -572,7 +573,7 @@
                     Help
                 </button>
         </div>
-            <div style="display:flex; align-items:center; gap:8px; position:absolute; right:0; top:50%; transform:translateY(-50%);">
+            <div style="display:flex; align-items:center; gap:8px; order:3; flex:1 1 0; justify-content:flex-end;">
             <!-- Quick Links dropdown (Admin, Inventory, Support, ClickUp) -->
             <div id="quickLinksWrap" style="position:relative; display:inline-block;">
                 <button id="quickLinksBtn" onclick="toggleQuickLinks(event)" class="top-bar-btn" style="padding:8px 12px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px; display:inline-flex; align-items:center; gap:6px;" title="Quick Links">Quick Links <span style="font-size:10px;">▾</span></button>
@@ -810,12 +811,13 @@
                     <!-- Config export/import (bottom of the left column; shown when Advanced is on) -->
                     <div id="presetConfigSection" style="display:none; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
                         <div style="font-size:12px; color:#ccc; margin-bottom:6px;">Configuration</div>
-                        <div style="display:flex; gap:8px; align-items:center;">
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" onclick="syncSharedConfigNow()" class="top-bar-btn" style="padding:6px 10px; background:#4CAF50; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Sync shared config</button>
                             <button type="button" onclick="exportPresetConfig()" class="top-bar-btn" style="padding:6px 10px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Export</button>
                             <button type="button" onclick="document.getElementById('importConfigFile').click()" class="top-bar-btn" style="padding:6px 10px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px;">Import</button>
                             <input id="importConfigFile" type="file" accept="application/json,.json" style="display:none;" onchange="if(this.files&&this.files[0]){importPresetConfigFromFile(this.files[0]); this.value='';}">
                         </div>
-                        <div style="font-size:12px; color:#aaa; margin-top:6px;">Export saves all preset settings (URLs, names, colors, order, hidden, links) to a file. Import replaces them.</div>
+                        <div style="font-size:12px; color:#aaa; margin-top:6px;"><strong>Sync shared config</strong> pulls the latest published presets now (replaces your current ones). <strong>Export</strong> saves all preset settings to a file; <strong>Import</strong> replaces them from a file.</div>
                     </div>
                 </div>
 
@@ -862,6 +864,24 @@
             <div style="display:flex; gap:8px; justify-content:flex-end;">
                 <button id="presetSyncKeepBtn" class="top-bar-btn" style="padding:8px 12px; background:#777; color:#fff; border:none; border-radius:4px; cursor:pointer;">Keep my saved URLs</button>
                 <button id="presetSyncSyncBtn" class="top-bar-btn" style="padding:8px 12px; background:#4CAF50; color:#fff; border:none; border-radius:4px; cursor:pointer;">Sync from this version</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared config sync prompt (public/config.json changed) -->
+    <div id="masterSyncModal" onclick="if(event.target===this){var b=document.getElementById('masterSyncKeepBtn'); if(b) b.click();}" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.6); z-index:2200; align-items:center; justify-content:center;">
+        <div style="background:#222; padding:18px; border-radius:8px; width:460px; max-width:92vw; color:#fff; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+            <h3 style="margin-bottom:8px;">Updated preset configuration available</h3>
+            <div style="font-size:13px; color:#ccc; line-height:1.5; margin-bottom:14px;">
+                A newer shared preset configuration has been published.
+                <br><br>
+                <strong>Sync</strong> replaces your current presets, colors, order, and links with the shared set.
+                <br>
+                <strong>Keep mine</strong> keeps your current setup and ignores this update.
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button id="masterSyncKeepBtn" class="top-bar-btn" style="padding:8px 12px; background:#777; color:#fff; border:none; border-radius:4px; cursor:pointer;">Keep mine</button>
+                <button id="masterSyncApplyBtn" class="top-bar-btn" style="padding:8px 12px; background:#4CAF50; color:#fff; border:none; border-radius:4px; cursor:pointer;">Sync</button>
             </div>
         </div>
     </div>
@@ -3949,6 +3969,7 @@
             let _presetOrder = null;  // [key, ...] display order for the top-bar buttons
             let _presetHidden = null; // { key: true } — presets hidden from the top bar
             let _presetLinks = null;  // { key: [ {label,url} ] } — extra dropdown links per preset
+            let _presetFirstRun = false; // true on a viewer's very first load (used for shared-config sync)
             const DEFAULT_CUSTOM_PRESET_COLOR = '#5f5f5f';
             // Swatch colors for the built-in preset rows in the editor (match their top-bar buttons).
             const BUILTIN_PRESET_COLORS = { tryon: '#072b5f', wellington: '#055117', desert: '#4a2f29', tbird: '#e56025' };
@@ -4084,6 +4105,7 @@
             function initPresetConfig() {
                 const stored = _loadStoredPresetConfig();
                 if (!stored || !stored.presets) {
+                    _presetFirstRun = true; // brand-new viewer: adopt a shared config silently (no prompt)
                     _activePresets = _clonePresets(DEFAULT_PRESETS);
                     _presetNames = _defaultPresetNames();
                     _presetColors = {};
@@ -4118,6 +4140,71 @@
                 if (stored.version !== PRESETS_VERSION) {
                     showPresetSyncModal();
                 }
+            }
+
+            // ---- Shared config (public/config.json): a master preset config the admin publishes ----
+            // On load, fetch it; brand-new viewers adopt it silently, existing viewers are prompted when
+            // it changes (detected via its "stamp"). This lets presets be updated for everyone by
+            // replacing config.json (produced with the Export button) rather than editing the app.
+            function _masterStampOf(cfg) { return String((cfg && (cfg.stamp || cfg.version)) || ''); }
+            async function fetchMasterConfig() {
+                const resp = await fetch('config.json?cb=' + Date.now(), { cache: 'no-store' });
+                if (!resp.ok) return null;
+                const cfg = await resp.json();
+                if (!cfg || typeof cfg !== 'object' || !cfg.presets || typeof cfg.presets !== 'object') return null;
+                return cfg;
+            }
+            function applyMasterConfig(cfg) {
+                _activePresets = _clonePresets(cfg.presets);
+                _presetNames = _clonePresets(cfg.names || {});
+                _presetColors = _clonePresets(cfg.colors || {});
+                _presetOrder = Array.isArray(cfg.order) ? cfg.order.slice() : null;
+                _presetHidden = (cfg.hidden && typeof cfg.hidden === 'object') ? _clonePresets(cfg.hidden) : {};
+                _presetLinks = (cfg.links && typeof cfg.links === 'object') ? _clonePresets(cfg.links) : {};
+                Object.keys(DEFAULT_PRESETS).forEach(function(k) { if (!_presetNames[k]) _presetNames[k] = PRESET_VENUE_LABELS[k] || k; });
+                _saveStoredPresetConfig();
+                try { localStorage.setItem('syncedMasterStamp', _masterStampOf(cfg)); } catch (e) { /* ignore */ }
+                renderCustomPresetButtons();
+            }
+            async function initMasterConfig() {
+                try {
+                    const cfg = await fetchMasterConfig();
+                    if (!cfg) return; // no shared config published — use baked/local config
+                    const masterStamp = _masterStampOf(cfg);
+                    if (!masterStamp) return; // can't tell if it's new; skip to avoid loops
+                    const syncedStamp = localStorage.getItem('syncedMasterStamp');
+                    if (syncedStamp === masterStamp) return; // already up to date with this shared config
+                    if (_presetFirstRun) { applyMasterConfig(cfg); return; } // first visit: adopt silently
+                    // Returning viewer and the shared config changed → ask.
+                    showMasterSyncModal(
+                        function() { applyMasterConfig(cfg); },
+                        function() { try { localStorage.setItem('syncedMasterStamp', masterStamp); } catch (e) { /* ignore */ } }
+                    );
+                } catch (e) { /* offline / no file / parse error — ignore, keep local config */ }
+            }
+            // Manual "sync now" from the Advanced settings — pulls the latest shared config on demand
+            // (useful for anyone who previously chose "Keep mine").
+            async function syncSharedConfigNow() {
+                try {
+                    const cfg = await fetchMasterConfig();
+                    if (!cfg) { if (typeof showToast === 'function') showToast('No shared config found to sync', 2600); return; }
+                    applyMasterConfig(cfg);
+                    // Refresh the editor if the Settings modal is open so the change is visible immediately.
+                    try { if (document.getElementById('settingsModal').style.display === 'flex') openPresetEditor(); } catch (e) { /* ignore */ }
+                    if (typeof showToast === 'function') showToast('Synced with the latest shared config', 2600);
+                } catch (e) { if (typeof showToast === 'function') showToast('Could not load shared config', 2600); }
+            }
+            function showMasterSyncModal(onSync, onKeep) {
+                try {
+                    const modal = document.getElementById('masterSyncModal');
+                    if (!modal) { onKeep && onKeep(); return; }
+                    modal.style.display = 'flex';
+                    const applyBtn = document.getElementById('masterSyncApplyBtn');
+                    const keepBtn = document.getElementById('masterSyncKeepBtn');
+                    const close = function() { modal.style.display = 'none'; };
+                    if (applyBtn) applyBtn.onclick = function() { try { onSync && onSync(); } catch (e) {} close(); if (typeof showToast === 'function') showToast('Preset configuration synced', 2400); };
+                    if (keepBtn) keepBtn.onclick = function() { try { onKeep && onKeep(); } catch (e) {} close(); if (typeof showToast === 'function') showToast('Kept your current presets', 2400); };
+                } catch (e) { console.warn('showMasterSyncModal error', e); onKeep && onKeep(); }
             }
             function showPresetSyncModal() {
                 try {
@@ -4646,7 +4733,9 @@
             // ---- Import / Export preset configuration ----
             function exportPresetConfig() {
                 try {
-                    const data = { version: PRESETS_VERSION, presets: getActivePresets(), names: getPresetNames(), colors: getPresetColors(), order: getPresetOrder(), hidden: getPresetHidden(), links: getPresetLinks() };
+                    // "stamp" is a unique marker so that when this file is published as the shared
+                    // public/config.json, viewers detect it as newer than what they last synced.
+                    const data = { version: PRESETS_VERSION, stamp: new Date().toISOString(), presets: getActivePresets(), names: getPresetNames(), colors: getPresetColors(), order: getPresetOrder(), hidden: getPresetHidden(), links: getPresetLinks() };
                     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
@@ -4947,6 +5036,7 @@
             // Initialize preset config (prompts to sync if this version has newer URLs),
             // wire the preset URL editor controls, and start the stream health watchdog.
             try { initPresetConfig(); } catch (e) { /* ignore */ }
+            try { initMasterConfig(); } catch (e) { /* ignore */ }
             try { startStreamWatchdog(); } catch (e) { /* ignore */ }
 
 
