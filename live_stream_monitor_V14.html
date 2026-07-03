@@ -392,6 +392,41 @@
             /* Tighten the outer padding/gaps on phones so tiles get more room. */
             body { padding: 10px; }
             .grid-container { gap: 10px; }
+
+            /* --- Top bar (page-header) on small screens ---
+               On desktop the three children (center title + left/right button
+               groups) are absolutely positioned so the title can sit dead-center.
+               On narrow screens that makes the title overlap and cover the
+               buttons (blocking taps) and lets the two button groups collide.
+               Switch the bar to normal flowing/wrapping flex, hide the center
+               title, and shrink the buttons so everything fits without overlap. */
+            .page-header {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 6px;
+                padding: 8px 6px;
+            }
+            /* Hide the title when there isn't room for it alongside the buttons. */
+            .page-header > h1 { display: none !important; }
+            /* Un-absolute the two button groups so they flow and wrap instead of
+               overlapping each other in the center. */
+            .page-header > div {
+                position: static !important;
+                transform: none !important;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            /* Scale the top-bar buttons down so they fit on the row. */
+            .page-header .top-bar-btn {
+                padding: 6px 8px !important;
+                font-size: 12px !important;
+                gap: 4px !important;
+                margin-left: 0 !important;
+            }
+            .page-header .top-bar-btn svg { width: 14px !important; height: 14px !important; }
         }
 
         /* --- Per-tile responsive sizing (Issue: black bars + oversized titles) ---
