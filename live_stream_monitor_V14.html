@@ -8,12 +8,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.20.3/video.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #1a1a1a; font-family: Arial, sans-serif; padding: 20px 20px 20px 20px; }
+        body { background: #1a1a1a; font-family: Arial, sans-serif; padding: 10px 20px 20px 20px; }
         h1 { color: #fff; text-align: center; margin-bottom: 20px; }
         .grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 15px;
+            gap: 10px;
             max-width: 1800px;
             margin: 0 auto;
         }
@@ -181,7 +181,7 @@
             color: #fff !important;
             border: none !important;
             box-shadow: none !important;
-            padding: 8px 12px !important;
+            padding: 7px 12px !important;
             border-radius: 4px !important;
         }
         #settingsBtn:hover, #logBtn:hover, #helpBtn:hover, #loginBtn:hover, #quickLinksBtn:hover {
@@ -391,7 +391,7 @@
             .grid-container { grid-template-columns: 1fr; }
             /* Tighten the outer padding/gaps on phones so tiles get more room. */
             body { padding: 10px; }
-            .grid-container { gap: 10px; }
+            .grid-container { gap: 6px; }
 
             /* --- Top bar (page-header) on small screens ---
                On desktop the three children (center title + left/right button
@@ -544,8 +544,8 @@
     </style>
 </head>
 <body>
-    <div class="page-header" style="max-width: 1800px; margin: 0 auto 16px auto; padding:8px 0 8px 0; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100;">
-        <h1 style="margin:0; order:2; flex:0 1 auto; min-width:0; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 12px;">Live Stream Monitor</h1>
+    <div class="page-header" style="max-width: 1800px; margin: 0 auto 8px auto; padding:2px 0; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100;">
+        <h1 style="margin:0; order:2; flex:0 1 auto; min-width:0; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 12px; font-size:26px; line-height:1;">Live Stream Monitor</h1>
         <div style="display:flex; align-items:center; gap:8px; order:1; flex:1 1 0; justify-content:flex-start;">
             <!-- Settings button -->
                 <button id="settingsBtn" onclick="openSettingsModal()" class="top-bar-btn" style="padding:8px 12px; background:#555; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:6px;" title="Settings">
@@ -628,7 +628,7 @@
             <button id="loadAllBtn" onclick="loadStreams()" class="top-bar-btn" style="padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;">Add All Streams</button>
         </div>
         <!-- Company controls: presets left-aligned, Add Custom on right -->
-        <div class="config-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
+        <div class="config-row" style="display: flex; gap: 10px; margin-bottom: 4px; align-items: center; flex-wrap: wrap;">
             <!-- Tryon dropdown group -->
             <div class="venue-dropdown" data-preset-key="tryon">
                 <button id="tryonBtn" class="top-bar-btn venue-main-btn" style="padding:8px 12px; background:#072b5f; color:#fff; border:none; cursor:pointer; font-size:14px;">Tryon</button>
@@ -2028,6 +2028,14 @@
                     streamWrapper.dataset.canonicalSrc = normalizeUrl(stream.stream_url);
                     streamWrapper.dataset.rawSrc = stream.stream_url;
                 }
+
+                // Store identifiers so a later manual refresh can re-query the API for a fresh URL
+                // when the stored one has expired (which a plain player restart can't fix).
+                try {
+                    if (stream.company_id !== undefined && stream.company_id !== null) streamWrapper.dataset.companyId = String(stream.company_id);
+                    if (stream.ring_number !== undefined && stream.ring_number !== null) streamWrapper.dataset.ringNumber = String(stream.ring_number);
+                    if (stream.ring_name) streamWrapper.dataset.ringName = String(stream.ring_name);
+                } catch (e) { /* ignore */ }
                 
                 // Prefer assigning neon/color by company_id (from API) or company fields
                 try {
@@ -2540,7 +2548,147 @@
             }
         }
 
-        // Header refresh button handler: reloads the stream in this wrapper using its stored URL.
+        // Hard restart: fully tear down any player(s) in this tile and rebuild the <video>
+        // element from scratch with a brand-new id, then re-initialize Video.js. This is more
+        // aggressive than a src reload — it recovers players that are wedged in a gray/stalled
+        // state where simply re-pointing the source doesn't help.
+        function hardRestartStreamForWrapper(wrapper, url) {
+            if (!wrapper || !url) return false;
+            try {
+                const streamContainer = wrapper.querySelector('.stream-container');
+                if (!streamContainer) return false;
+                const runningFromFile = (location && location.protocol === 'file:');
+
+                // 1) Dispose EVERY Video.js player attached to this tile (match by DOM containment
+                //    or by the current <video> id) so no ghost decoder/MSE keeps running.
+                const oldVideo = wrapper.querySelector('video');
+                const oldId = oldVideo && oldVideo.id;
+                for (let i = 0; i < players.length; i++) {
+                    const p = players[i];
+                    if (!p) continue;
+                    try {
+                        const el = p.el_ || (typeof p.el === 'function' ? p.el() : null);
+                        if (el && (wrapper.contains(el) || (oldId && el.id === oldId))) {
+                            if (typeof p.dispose === 'function') p.dispose();
+                            players[i] = null;
+                        }
+                    } catch (e) { /* ignore per-player dispose errors */ }
+                }
+                // Also dispose via the Video.js registry for the old id, in case it wasn't tracked in players[].
+                if (oldId) {
+                    try {
+                        const reg = (typeof videojs.getPlayers === 'function') ? videojs.getPlayers() : null;
+                        const ex = reg ? reg[oldId] : null;
+                        if (ex && typeof ex.dispose === 'function') ex.dispose();
+                    } catch (e) { /* ignore */ }
+                }
+
+                // 2) Rebuild the <video> with a fresh, unique id so nothing references the old player.
+                const newId = (typeof allocateVideoId === 'function') ? allocateVideoId() : ('video_' + Date.now());
+                streamContainer.className = 'stream-container';
+                streamContainer.innerHTML =
+                    '<video id="' + newId + '" class="video-js vjs-default-skin" controls preload="auto" autoplay muted playsinline>' +
+                        '<source src="' + url + '" type="application/x-mpegURL">' +
+                    '</video>';
+
+                // 3) Initialize a brand-new player (mirrors the options used at initial creation).
+                const initOptions = {
+                    autoplay: true,
+                    muted: true,
+                    html5: { vhs: { overrideNative: !runningFromFile }, nativeVideoTracks: false, nativeAudioTracks: false, nativeTextTracks: false }
+                };
+                const newPlayer = videojs(newId, initOptions);
+                players.push(newPlayer);
+                newPlayer.ready(function() {
+                    try {
+                        this.src({ src: url, type: 'application/x-mpegURL' });
+                        this.load();
+                        const pr = this.play();
+                        if (pr && typeof pr.catch === 'function') pr.catch(() => { /* autoplay may be blocked; ignore */ });
+                    } catch (e) { console.warn('hardRestart play error', e); }
+                });
+                return true;
+            } catch (e) {
+                console.warn('hardRestartStreamForWrapper error', e);
+                return false;
+            }
+        }
+
+        // Fallback for API-loaded tiles: re-query GetRingStreams for this ring and, if it returns a
+        // different (fresh) URL, repoint the tile and hard-restart. This recovers streams that greyed
+        // out because their signed/tokenized URL expired — a player restart alone reloads the dead URL.
+        async function refetchFreshUrlAndRestart(wrapper) {
+            try {
+                if (!wrapper || !wrapper.dataset) return false;
+                const companyId = wrapper.dataset.companyId;
+                const ringNumber = wrapper.dataset.ringNumber;
+                const ringName = wrapper.dataset.ringName;
+                // Only API tiles carry a companyId; preset/custom tiles don't and can't be re-queried this way.
+                if (!companyId || (ringNumber === undefined && !ringName)) return false;
+
+                // Credentials: prefer the persisted login, else the current input fields.
+                let username = localStorage.getItem('savedUsername') || ((document.getElementById('username') || {}).value || '');
+                let password = '';
+                const savedPw = localStorage.getItem('savedPassword');
+                if (savedPw) { try { password = atob(savedPw); } catch (e) { password = ''; } }
+                if (!password) password = (document.getElementById('password') || {}).value || '';
+                if (!username || !password) return false;
+
+                const apiUrl = buildApiUrl(companyId);
+                const resp = await fetch(apiUrl, { method: 'GET', headers: { 'Authorization': 'Basic ' + btoa(username + ':' + password), 'Content-Type': 'application/json' } });
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                const streams = Array.isArray(data) ? data : (data.streams || []);
+
+                // Match the same ring — by ring_number first (stable), then ring_name.
+                let match = null;
+                if (ringNumber !== undefined && ringNumber !== '') {
+                    match = streams.find(function(s) { return String(s.ring_number) === String(ringNumber); });
+                }
+                if (!match && ringName) {
+                    match = streams.find(function(s) { return String(s.ring_name || '').toLowerCase() === String(ringName).toLowerCase(); });
+                }
+                if (!match || !match.stream_url) return false;
+
+                const freshUrl = match.stream_url;
+                try { wrapper.dataset.rawSrc = freshUrl; wrapper.dataset.canonicalSrc = freshUrl; } catch (e) { /* ignore */ }
+                try { wrapper.classList.remove('offline-alert'); } catch (e) { /* ignore */ }
+                try { if (typeof window.__resetTileHealth === 'function') window.__resetTileHealth(wrapper); } catch (e) { /* ignore */ }
+                const ok = hardRestartStreamForWrapper(wrapper, freshUrl);
+                if (ok && typeof showToast === 'function') showToast('Fetched a fresh URL and restarted', 2400);
+                return ok;
+            } catch (e) {
+                console.warn('refetchFreshUrlAndRestart error', e);
+                return false;
+            }
+        }
+
+        // A few seconds after a manual restart, check whether it actually recovered. If the fresh player
+        // still isn't loading (error / no data), the stored URL is likely stale — try to get a working URL:
+        // API tiles re-query the API; preset/custom tiles probe alternate URL variants (URL failover).
+        function scheduleRefreshFallback(wrapper, prevUrl) {
+            if (!wrapper) return;
+            try { if (wrapper._refreshFallbackTimer) clearTimeout(wrapper._refreshFallbackTimer); } catch (e) { /* ignore */ }
+            wrapper._refreshFallbackTimer = setTimeout(async function() {
+                try {
+                    const v = wrapper.querySelector('video');
+                    if (!v) return;
+                    const healthy = !v.error && v.readyState >= 2; // has current data and no fatal error
+                    if (healthy) return; // the restart worked — nothing more to do
+                    let recovered = false;
+                    if (wrapper.dataset && wrapper.dataset.companyId) {
+                        recovered = await refetchFreshUrlAndRestart(wrapper);
+                    }
+                    if (!recovered && typeof window.__reconnectWithFailover === 'function') {
+                        const src = (wrapper.dataset && wrapper.dataset.rawSrc) || prevUrl;
+                        if (src) { try { window.__reconnectWithFailover(wrapper, src); } catch (e) { /* ignore */ } }
+                    }
+                } catch (e) { /* ignore */ }
+            }, 6000);
+        }
+
+        // Header refresh button handler: fully restarts the stream's video player using its stored URL,
+        // and if that doesn't recover it, falls back to fetching a fresh URL (API re-query / URL failover).
         function refreshStreamContainer(btn) {
             try {
                 const wrapper = btn && btn.closest ? btn.closest('.stream-wrapper') : null;
@@ -2550,11 +2698,17 @@
                     if (typeof showToast === 'function') showToast('No stream URL to reload', 2200);
                     return;
                 }
-                const ok = reloadPlayerForWrapper(wrapper, url, true);
-                if (typeof showToast === 'function') showToast(ok ? 'Reloading stream...' : 'Reload attempted', 1600);
+                // Clear any active alert and reset the tile's health so the watchdog re-evaluates the
+                // fresh player cleanly (otherwise stale timing state can make it look stalled at first).
+                try { wrapper.classList.remove('offline-alert'); } catch (e) { /* ignore */ }
+                try { if (typeof window.__resetTileHealth === 'function') window.__resetTileHealth(wrapper); } catch (e) { /* ignore */ }
+                const ok = hardRestartStreamForWrapper(wrapper, url);
+                if (typeof showToast === 'function') showToast(ok ? 'Restarting stream…' : 'Restart attempted', 1600);
+                // If the restart doesn't take, try to recover with a fresh URL.
+                scheduleRefreshFallback(wrapper, url);
             } catch (e) {
                 console.warn('refreshStreamContainer error', e);
-                if (typeof showToast === 'function') showToast('Failed to reload stream', 2200);
+                if (typeof showToast === 'function') showToast('Failed to restart stream', 2200);
             }
         }
 
@@ -3830,6 +3984,9 @@
                     try { reloadPlayerForWrapper(wrapper, currentUrl, true); } catch (_) { /* ignore */ }
                 }
             }
+            // Exposed so the manual Refresh button (outer scope) can use URL failover as a fallback
+            // for preset/custom tiles that aren't backed by the GetRingStreams API.
+            window.__reconnectWithFailover = reconnectWithFailover;
 
             // The tile is playing a short end-of-stream VOD placeholder. Look for a variant that has
             // live footage; if found, switch to it. If none is live, keep the placeholder (do nothing) —
@@ -4829,6 +4986,19 @@
             const ALERT_AFTER_MS = 60000;     // flash a red alert after this long without a live signal
 
             function isAutoReconnectEnabled() { return localStorage.getItem('autoReconnect') !== '0'; } // default on
+
+            // Exposed so the manual Refresh button (outer scope) can clear a tile's health timing
+            // state after a hard restart, so the watchdog doesn't briefly mis-flag the fresh player.
+            window.__resetTileHealth = function(wrapper) {
+                try {
+                    const st = _streamHealth.get(wrapper);
+                    if (st) {
+                        const now = Date.now();
+                        st.lastTime = 0; st.lastAdvanceTs = now; st.lastLiveTs = now;
+                        st.retries = 0; st.nextRetryTs = 0; st.escalated = false; st.everPlayed = false;
+                    }
+                } catch (e) { /* ignore */ }
+            };
 
             function ensureHealthIndicator(wrapper) {
                 const header = wrapper.querySelector('.stream-header');
