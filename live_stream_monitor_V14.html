@@ -264,6 +264,10 @@
             object-fit: contain !important; background: #000;
             z-index: 0;
         }
+        /* Hide Video.js's big play button. By default it sits in the top-left corner and reappears
+           whenever the player momentarily pauses/buffers, flashing over an otherwise-playing feed.
+           These tiles autoplay muted and have the control bar + Refresh, so it's just noise. */
+        .video-js .vjs-big-play-button { display: none !important; }
     /* (min-height moved into the main .stream-container rule above) */
         /* Header remove button (absolute so it doesn't affect layout). Hidden until wrapper hover. */
         .header-remove-btn {
@@ -360,6 +364,7 @@
             align-self: center;
         }
         .health-indicator.live { background: #37d67a; box-shadow: 0 0 6px rgba(55,214,122,0.85); }
+        .health-indicator.paused { background: #4aa3f0; box-shadow: 0 0 6px rgba(74,163,240,0.75); }
         .health-indicator.buffering { background: #f6c945; animation: healthPulse 1s ease-in-out infinite; }
         .health-indicator.reconnecting { background: #f6a545; animation: healthPulse 0.8s ease-in-out infinite; }
         .health-indicator.offline { background: #e5534b; box-shadow: 0 0 6px rgba(229,83,75,0.7); }
@@ -784,14 +789,6 @@
                         </label>
                         <div style="font-size:12px; color:#aaa; margin-top:4px; margin-left:26px;">Toggle the preset quick-open buttons in the top bar.</div>
                     </div>
-                    <div>
-                        <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
-                            <input id="settingsAutoReconnect" type="checkbox" checked style="width:18px; height:18px; cursor:pointer;">
-                            <span>Auto-reconnect failed streams</span>
-                        </label>
-                        <div style="font-size:12px; color:#aaa; margin-top:4px; margin-left:26px;">Automatically reload a stream that stalls or errors.</div>
-                    </div>
-
                     <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
                         <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
                             <input id="settingsAdvanced" type="checkbox" onchange="toggleAdvancedSettings(this.checked)" style="width:18px; height:18px; cursor:pointer;">
@@ -920,10 +917,11 @@
                 <h4 style="color:#fff; margin:14px 0 6px;">Health indicator (the dot on each tile)</h4>
                 <ul style="margin:0 0 0 18px; padding:0;">
                     <li><span style="color:#37d67a;">●</span> <strong>Green – Live:</strong> playing normally.</li>
+                    <li><span style="color:#4aa3f0;">●</span> <strong>Blue – Paused:</strong> you paused this tile — not an error.</li>
                     <li><span style="color:#f6c945;">●</span> <strong>Amber – Buffering/Connecting:</strong> loading or briefly stalled.</li>
                     <li><span style="color:#f6a545;">●</span> <strong>Orange – Reconnecting:</strong> the feed dropped (or is showing an end-of-stream clip) and the tool is trying to recover.</li>
                     <li><span style="color:#e5534b;">●</span> <strong>Red – Offline:</strong> no live signal.</li>
-                    <li><strong style="color:#ff3b3b;">Flashing red border:</strong> needs attention — the tile has had no live signal for 60s (or Auto-reconnect is off). Hover the dot for details.</li>
+                    <li><strong style="color:#ff3b3b;">Flashing red border:</strong> needs attention — the tile has had no live signal for 60s. Hover the dot for details.</li>
                 </ul>
 
                 <div id="howtoAutoSection">
@@ -937,7 +935,7 @@
 
                 <h4 style="color:#fff; margin:14px 0 6px;">Top bar buttons</h4>
                 <ul style="margin:0 0 0 18px; padding:0;">
-                    <li><strong>Settings</strong> → show or hide optional controls, and turn <strong>Auto-reconnect</strong> on or off.</li>
+                    <li><strong>Settings</strong> → show or hide optional controls. (Failed streams auto-reconnect automatically.)</li>
                     <li><strong>Advanced settings</strong> (in Settings) → edit each venue's stream URLs; <strong>add, name, color, and reorder presets</strong>; and <strong>Import/Export</strong> your whole configuration as a file to back it up or move it to another computer.</li>
                     <li><strong>Log</strong> → shows a history of this session's notifications.</li>
                     <li id="howtoLoginItem"><strong>API Login</strong> → sign in with your SGL API credentials so you can load streams by Company.</li>
@@ -1432,15 +1430,12 @@
             const showClassTrips = localStorage.getItem('showClassTrips') !== '0'; // Default to true
             const showPresetButtons = localStorage.getItem('showPresetButtons') !== '0'; // Default to true
             const showCompanyRing = localStorage.getItem('showCompanyRing') === '1'; // Default to false
-            const autoReconnect = localStorage.getItem('autoReconnect') !== '0'; // Default to true
 
             document.getElementById('settingsShowClassTrips').checked = showClassTrips;
             // settings checkbox for preset buttons
             try { document.getElementById('settingsShowPresets').checked = showPresetButtons; } catch (e) { /* ignore if missing */ }
             // settings checkbox for Company & Select Ring controls
             try { document.getElementById('settingsShowCompanyRing').checked = showCompanyRing; } catch (e) { /* ignore if missing */ }
-            // settings checkbox for auto-reconnect
-            try { document.getElementById('settingsAutoReconnect').checked = autoReconnect; } catch (e) { /* ignore if missing */ }
             // initialize the preset URL editor with a fresh working copy
             try { openPresetEditor(); } catch (e) { /* ignore if missing */ }
             // collapse the Advanced settings section each time the modal opens
@@ -1494,7 +1489,7 @@
             try {
                 const showPresetButtons = localStorage.getItem('showPresetButtons') !== '0'; // default on
                 const showCompanyRing = localStorage.getItem('showCompanyRing') === '1';      // default off
-                const autoReconnect = localStorage.getItem('autoReconnect') !== '0';          // default on
+                const autoReconnect = true;                                                  // always on (toggle removed)
 
                 const presetItem = document.getElementById('howtoPresetItem');
                 if (presetItem) presetItem.style.display = showPresetButtons ? '' : 'none';
@@ -1577,14 +1572,12 @@
             const showClassTrips = document.getElementById('settingsShowClassTrips').checked;
             const showPresetButtons = (document.getElementById('settingsShowPresets') || {}).checked;
             const showCompanyRing = (document.getElementById('settingsShowCompanyRing') || {}).checked;
-            const autoReconnect = (document.getElementById('settingsAutoReconnect') || {}).checked;
 
             // Save preferences
             try {
                 localStorage.setItem('showClassTrips', showClassTrips ? '1' : '0');
                 localStorage.setItem('showPresetButtons', showPresetButtons ? '1' : '0');
                 localStorage.setItem('showCompanyRing', showCompanyRing ? '1' : '0');
-                localStorage.setItem('autoReconnect', autoReconnect ? '1' : '0');
             } catch (e) { /* ignore */ }
 
             // Commit any edits made in the preset URL editor
@@ -2392,8 +2385,7 @@
                     'skipUnavailableOnLoadAll': '1', // Skip Offline: on
                     'showCompanyRing': '0',          // Show Company & Select Ring controls: off
                     'showClassTrips': '0',           // Show class and trip data (API streams only): off
-                    'showPresetButtons': '1',        // Show preset buttons: on
-                    'autoReconnect': '1'             // Auto-reconnect failed streams: on
+                    'showPresetButtons': '1'         // Show preset buttons: on
                 };
                 Object.keys(defaults).forEach(function(k) {
                     if (localStorage.getItem(k) === null) localStorage.setItem(k, defaults[k]);
@@ -2735,7 +2727,7 @@
 
 
     function addFeed(value, label, showKeyFromList, meta) {
-            if (!value) { if (typeof showToast === 'function') showToast('No feed specified', 2000); return; }
+            if (!value) { if (typeof showToast === 'function') showToast('No feed specified', 2000); return 'error'; }
             const dateInput = document.getElementById('dateInput');
             let dateVal = (dateInput && dateInput.value) ? dateInput.value : null;
             if (!dateVal) {
@@ -2770,8 +2762,10 @@
                 return false;
             }
             if (isSrcAlreadyOpen(src)) {
-                if (typeof showToast === 'function') showToast(`${label} is already open`, 1700);
-                return;
+                // Stay quiet during bulk/preset loads (meta.quiet) — the caller shows one summary
+                // instead. Single manual adds still show this.
+                if (!(meta && meta.quiet) && typeof showToast === 'function') showToast(`${label} is already open`, 1700);
+                return 'exists';
             }
             const videoId = allocateVideoId();
             const wrapper = document.createElement('div');
@@ -2894,7 +2888,7 @@
             wrapper.appendChild(streamContainer);
             
             const grid = document.querySelector('.grid-container');
-            if (!grid) { if (typeof showToast === 'function') showToast('Grid not found', 3000); else alert('Grid not found'); return; }
+            if (!grid) { if (typeof showToast === 'function') showToast('Grid not found', 3000); else alert('Grid not found'); return 'error'; }
             grid.appendChild(wrapper);
             
             // Force a layout/reflow to ensure the newly appended grid item receives correct sizing
@@ -2972,7 +2966,8 @@
                 }
             }
             
-            if (typeof showToast === 'function') showToast('Added - ' + label, 2000);
+            if (!(meta && meta.quiet) && typeof showToast === 'function') showToast('Added - ' + label, 2000);
+            return 'added';
         }
 
         function addSelectedFeed() {
@@ -3743,8 +3738,8 @@
                     empty.textContent = 'No toast notifications in this session.';
                     list.appendChild(empty);
                 } else {
-                    // Show in chronological order (oldest first)
-                    toastLog.forEach(entry => {
+                    // Show most recent first (newest at top)
+                    toastLog.slice().reverse().forEach(entry => {
                         const row = document.createElement('div');
                         row.style.display = 'flex';
                         row.style.justifyContent = 'space-between';
@@ -4959,13 +4954,35 @@
                     });
                     const before = feeds.length;
                     feeds = await filterOfflineFeeds(feeds, venueName);
-                    const skipped = before - feeds.length;
-                    if (typeof showToast === 'function') {
-                        let msg = 'Adding ' + feeds.length + ' ' + venueName + ' feeds...';
-                        if (skipped > 0) msg += ' (skipped ' + skipped + ' offline)';
-                        showToast(msg, 1800);
+                    const offline = before - feeds.length;   // reachable check removed these
+                    const total = feeds.length;               // streams online / reachable
+
+                    // Build a single summary once all adds finish, e.g.
+                    // "Tryon — 2 streams added, 3 already open, 1 offline". Per-feed toasts are
+                    // suppressed (meta.quiet) so the summary is the only notification.
+                    function showPresetSummary(added, already) {
+                        if (typeof showToast !== 'function') return;
+                        const parts = [];
+                        parts.push(added + (added === 1 ? ' stream added' : ' streams added'));
+                        if (already > 0) parts.push(already + ' already open');
+                        if (offline > 0) parts.push(offline + ' offline');
+                        showToast(venueName + ' — ' + parts.join(', '), 3200);
                     }
-                    feeds.forEach(function(f, idx) { setTimeout(function() { addFeed(f.url, f.label, key, { isCustomStream: true, stream_status: 'live' }); }, idx * 50); });
+
+                    if (total === 0) { showPresetSummary(0, 0); return; }
+
+                    let addedCount = 0, existsCount = 0, doneCount = 0;
+                    feeds.forEach(function(f, idx) {
+                        setTimeout(function() {
+                            let res;
+                            try { res = addFeed(f.url, f.label, key, { isCustomStream: true, stream_status: 'live', quiet: true }); }
+                            catch (e) { res = 'error'; }
+                            if (res === 'exists') existsCount++;
+                            else if (res === 'added') addedCount++;
+                            doneCount++;
+                            if (doneCount === total) showPresetSummary(addedCount, existsCount);
+                        }, idx * 50);
+                    });
                 } catch (e) {
                     console.error('open ' + venueName + ' feeds error', e);
                     if (typeof showToast === 'function') showToast('Failed to open ' + venueName + ' feeds', 3000);
@@ -4985,7 +5002,7 @@
             const STALL_THRESHOLD_MS = 12000; // no playback progress for this long => reconnect
             const ALERT_AFTER_MS = 60000;     // flash a red alert after this long without a live signal
 
-            function isAutoReconnectEnabled() { return localStorage.getItem('autoReconnect') !== '0'; } // default on
+            function isAutoReconnectEnabled() { return true; } // auto-reconnect is always on (settings toggle removed)
 
             // Exposed so the manual Refresh button (outer scope) can clear a tile's health timing
             // state after a hard restart, so the watchdog doesn't briefly mis-flag the fresh player.
@@ -5018,13 +5035,15 @@
                 }
                 return dot;
             }
-            function setTileHealth(wrapper, state, detail) {
+            function setTileHealth(wrapper, state, detail, titleOverride) {
                 const dot = ensureHealthIndicator(wrapper);
                 if (!dot) return;
-                ['live', 'buffering', 'offline', 'connecting', 'reconnecting'].forEach(function(c) { dot.classList.remove(c); });
+                ['live', 'paused', 'buffering', 'offline', 'connecting', 'reconnecting'].forEach(function(c) { dot.classList.remove(c); });
                 dot.classList.add(state);
-                const labels = { live: 'Live', buffering: 'Buffering…', offline: 'Offline', connecting: 'Connecting…', reconnecting: 'Reconnecting…' };
-                dot.title = (labels[state] || state) + (detail ? (' — ' + detail) : '');
+                // titleOverride lets a caller set the full tooltip when the plain "<state> — <detail>"
+                // form would be misleading (e.g. an end-of-stream clip shouldn't read as "Reconnecting").
+                const labels = { live: 'Live', paused: 'Paused', buffering: 'Buffering', offline: 'Offline', connecting: 'Connecting', reconnecting: 'Reconnecting' };
+                dot.title = titleOverride || ((labels[state] || state) + (detail ? (' — ' + detail) : ''));
             }
             function streamWatchdogTick() {
                 try {
@@ -5059,11 +5078,10 @@
                         const isLiveNow = !isShortVod && (userPaused || (advanced && !hasError));
                         if (isLiveNow) st.lastLiveTs = now;
                         const noLiveForMs = now - (st.lastLiveTs || now);
-                        const hardProblem = stalled || isShortVod;
 
-                        // Escalate to a flashing red alert: immediately if auto-reconnect is off (we're not even
-                        // trying), otherwise after ALERT_AFTER_MS (60s) without a live signal while it keeps trying.
-                        const escalated = !isLiveNow && ((!autoReconnect && hardProblem) || (autoReconnect && noLiveForMs >= ALERT_AFTER_MS));
+                        // Escalate to a flashing red alert after ALERT_AFTER_MS (60s) without a live signal
+                        // while auto-reconnect keeps trying.
+                        const escalated = !isLiveNow && noLiveForMs >= ALERT_AFTER_MS;
                         st.escalated = escalated; // remembered so foreground-recovery won't clear an active alert
                         wrapper.classList.toggle('offline-alert', escalated);
 
@@ -5080,33 +5098,29 @@
                             } else {
                                 try { reconnectWithFailover(wrapper, rawSrc); } catch (e) { try { reloadPlayerForWrapper(wrapper, rawSrc, true); } catch (_) {} }
                             }
-                            setTileHealth(wrapper, escalated ? 'offline' : 'reconnecting', 'attempt ' + st.retries);
+                            setTileHealth(wrapper, escalated ? 'offline' : 'reconnecting', 'feed dropped — reloading (attempt ' + st.retries + ')');
                             return;
                         }
 
-                        let state;
-                        if (userPaused) { state = 'live'; st.retries = 0; st.nextRetryTs = 0; }
-                        else if (advanced && !hasError) { state = 'live'; st.retries = 0; st.nextRetryTs = 0; }
-                        else if (stalled) { state = escalated ? 'offline' : 'reconnecting'; }
-                        else if (!st.everPlayed) { state = 'connecting'; }
-                        else { state = 'buffering'; }
-                        setTileHealth(wrapper, state);
+                        let state, detail, titleOverride;
+                        if (userPaused) { state = 'paused'; titleOverride = 'Paused — you paused this tile'; st.retries = 0; st.nextRetryTs = 0; }
+                        else if (advanced && !hasError) { state = 'live'; detail = 'receiving live video'; st.retries = 0; st.nextRetryTs = 0; }
+                        else if (stalled) { state = escalated ? 'offline' : 'reconnecting'; detail = escalated ? 'no video received' : 'playback stalled — recovering'; }
+                        else if (!st.everPlayed) { state = 'connecting'; detail = 'loading stream'; }
+                        else { state = 'buffering'; detail = 'loading video'; }
+                        setTileHealth(wrapper, state, detail, titleOverride);
                         // Keep the dot in sync with an escalated alert for non-VOD problems (e.g. long buffering).
-                        if (escalated && !isShortVod) setTileHealth(wrapper, 'offline', 'no live signal');
+                        if (escalated && !isShortVod) setTileHealth(wrapper, 'offline', 'no video received for a while');
 
                         // End-of-stream placeholder: always signal it's not a live feed (even when auto-reconnect
                         // is off). Only probe for a live variant to switch to when auto-reconnect is enabled.
                         if (rawSrc && isShortVod) {
-                            if (autoReconnect) {
-                                setTileHealth(wrapper, escalated ? 'offline' : 'reconnecting',
-                                    escalated ? 'end-of-stream clip — no live signal' : 'end-of-stream clip — checking for live footage');
-                                if (!st.nextVodProbeTs || now >= st.nextVodProbeTs) {
-                                    st.nextVodProbeTs = now + 30000; // throttle the manifest probing
-                                    try { probeForLiveVariant(wrapper, rawSrc); } catch (e) { /* ignore */ }
-                                }
-                            } else {
-                                // Auto-reconnect off: still show "not live", just don't try to recover.
-                                setTileHealth(wrapper, 'offline', 'end-of-stream clip (no live signal)');
+                            setTileHealth(wrapper, escalated ? 'offline' : 'reconnecting', null,
+                                escalated ? 'Showing an end-of-stream clip — no live feed found yet'
+                                          : 'Showing an end-of-stream clip — checking for the live feed');
+                            if (!st.nextVodProbeTs || now >= st.nextVodProbeTs) {
+                                st.nextVodProbeTs = now + 30000; // throttle the manifest probing
+                                try { probeForLiveVariant(wrapper, rawSrc); } catch (e) { /* ignore */ }
                             }
                         } else {
                             st.nextVodProbeTs = 0;
