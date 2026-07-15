@@ -1013,6 +1013,17 @@
             return 'video' + nextVideoId;
         }
 
+        // Track a newly-created Video.js player. Reuses a slot freed by a disposed player (dispose sites
+        // null the slot in place) so the array doesn't grow without bound over a long session of
+        // reconnects; otherwise appends. Never reindexes live entries, so existing lookups stay valid.
+        function registerPlayer(p) {
+            for (let i = 0; i < players.length; i++) {
+                if (players[i] === null) { players[i] = p; return i; }
+            }
+            players.push(p);
+            return players.length - 1;
+        }
+
         // Force playback by default (always attempt to initialize players). Setting this to true makes the app
         // attempt playback even when opened from file://. Note: some browsers may still block blob:// resources
         // when using file://; serving via HTTP is still recommended for reliable HLS/MSE playback.
@@ -2171,7 +2182,7 @@
                                         nativeTextTracks: false
                                     }
                                 });
-                                players.push(player);
+                                registerPlayer(player);
                                 player.ready(function() {
                                     try {
                                         this.src({ src: stream.stream_url, type: 'application/x-mpegURL' });
@@ -2213,7 +2224,7 @@
                                     }
                                 });
 
-                                players.push(player);
+                                registerPlayer(player);
 
                                 player.on('loadedmetadata', function() {
                                     player.play().catch(function(error) {
@@ -2453,7 +2464,7 @@
                                             html5: { vhs: { overrideNative: !runningFromFile }, nativeVideoTracks: false, nativeAudioTracks: false, nativeTextTracks: false }
                                         };
                                         const newPlayer = videojs(savedVideoId, initOptions);
-                                        players.push(newPlayer);
+                                        registerPlayer(newPlayer);
                                         newPlayer.ready(function() {
                                             try {
                                                 this.src({ src: url, type: 'application/x-mpegURL' });
@@ -2590,7 +2601,7 @@
                     html5: { vhs: { overrideNative: !runningFromFile }, nativeVideoTracks: false, nativeAudioTracks: false, nativeTextTracks: false }
                 };
                 const newPlayer = videojs(newId, initOptions);
-                players.push(newPlayer);
+                registerPlayer(newPlayer);
                 newPlayer.ready(function() {
                     try {
                         this.src({ src: url, type: 'application/x-mpegURL' });
@@ -2915,7 +2926,7 @@
                                     nativeTextTracks: false
                                 }
                             });
-                            players.push(player);
+                            registerPlayer(player);
                             player.ready(function() {
                                 try {
                                     this.src({ src: src, type: 'application/x-mpegURL' });
@@ -2948,7 +2959,7 @@
                                     nativeTextTracks: false
                                 }
                             });
-                            players.push(player);
+                            registerPlayer(player);
                             
                             player.on('loadedmetadata', function() {
                                 player.play().catch(function(error) {
@@ -5113,8 +5124,9 @@
                         else if (!st.everPlayed) { state = 'connecting'; detail = 'loading stream'; }
                         else { state = 'buffering'; detail = 'loading video'; }
                         setTileHealth(wrapper, state, detail, titleOverride);
-                        // Keep the dot in sync with an escalated alert for non-VOD problems (e.g. long buffering).
-                        if (escalated && !isShortVod) setTileHealth(wrapper, 'offline', 'no video received for a while');
+                        // Keep the dot in sync with an escalated alert for non-VOD problems (e.g. long buffering),
+                        // but preserve the more specific "stream ended" reason when that's the cause.
+                        if (escalated && !isShortVod) setTileHealth(wrapper, 'offline', ended ? 'stream ended' : 'no video received for a while');
 
                         // End-of-stream placeholder: always signal it's not a live feed (even when auto-reconnect
                         // is off). Only probe for a live variant to switch to when auto-reconnect is enabled.
