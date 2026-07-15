@@ -5063,8 +5063,11 @@
                         const advanced = (t - st.lastTime) > 0.1;
                         if (advanced) { st.lastTime = t; st.lastAdvanceTs = now; st.everPlayed = true; }
                         const sinceAdvance = now - st.lastAdvanceTs;
-                        // Treat a deliberate pause (content buffered, no error) as healthy — don't fight the operator.
-                        const userPaused = video.paused && !hasError && video.readyState >= 3;
+                        const ended = !!video.ended;
+                        // Treat a deliberate pause (content buffered, no error) as healthy — don't fight the
+                        // operator. A stream that has *ended* also sits paused/buffered with no error, so exclude
+                        // it here: it isn't a user pause and should read as Offline (red), not Paused (blue).
+                        const userPaused = video.paused && !ended && !hasError && video.readyState >= 3;
                         const stalled = !userPaused && (hasError || (sinceAdvance > STALL_THRESHOLD_MS));
                         // End-of-stream placeholder: a completed VOD (~60s) plays fine (currentTime advances),
                         // so it isn't "stalled" — detect it by its short, finite duration.
@@ -5105,6 +5108,7 @@
                         let state, detail, titleOverride;
                         if (userPaused) { state = 'paused'; titleOverride = 'Paused — you paused this tile'; st.retries = 0; st.nextRetryTs = 0; }
                         else if (advanced && !hasError) { state = 'live'; detail = 'receiving live video'; st.retries = 0; st.nextRetryTs = 0; }
+                        else if (ended && !isShortVod) { state = 'offline'; detail = 'stream ended'; }
                         else if (stalled) { state = escalated ? 'offline' : 'reconnecting'; detail = escalated ? 'no video received' : 'playback stalled — recovering'; }
                         else if (!st.everPlayed) { state = 'connecting'; detail = 'loading stream'; }
                         else { state = 'buffering'; detail = 'loading video'; }
